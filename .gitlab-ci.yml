@@ -1,0 +1,35 @@
+image: node:20-alpine
+
+stages:
+  - validate
+  - test
+  - build
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+before_script:
+  - npm ci
+
+prisma_validate:
+  stage: validate
+  variables:
+    DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+  script:
+    - npx prisma validate --config prisma7.config.ts
+    - npx prisma generate --config prisma7.config.ts
+
+unit_tests:
+  stage: test
+  script:
+    - npm test
+
+build_app:
+  stage: build
+  variables:
+    DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+  script:
+    - npx prisma generate --config prisma7.config.ts
+    - npm run build

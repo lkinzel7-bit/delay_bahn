@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  balance      Int      @default(100)
+  bets         Bet[]
+  createdAt    DateTime @default(now())
+}
+
+model TrainConnection {
+  id               String      @id @default(cuid())
+  externalTrainId  String      @unique
+  trainNumber      String
+  origin           String
+  destination      String
+  plannedDeparture DateTime
+  plannedArrival   DateTime
+  actualArrival    DateTime?
+  status           TrainStatus @default(SCHEDULED)
+  bets             Bet[]
+  updatedAt        DateTime    @updatedAt
+}
+
+model Bet {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  trainConnectionId String
+  trainConnection   TrainConnection @relation(fields: [trainConnectionId], references: [id])
+  prediction        PredictionType
+  stake             Int
+  multiplier        Float
+  status            BetStatus       @default(PENDING)
+  payout            Int             @default(0)
+  createdAt         DateTime        @default(now())
+
+  @@unique([userId, trainConnectionId])
+}
+
+enum TrainStatus {
+  SCHEDULED
+  FINISHED
+  CANCELLED
+}
+
+enum PredictionType {
+  ON_TIME
+  DELAYED
+}
+
+enum BetStatus {
+  PENDING
+  WON
+  LOST
+  REFUNDED
+}
